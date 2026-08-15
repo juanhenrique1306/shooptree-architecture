@@ -42,6 +42,7 @@ cd shooptree-architecture
 
 # Instalar dependências
 pip install fastapi uvicorn pydantic
+```
 
 ## Diagramas da Nova Arquitetura
 
@@ -58,7 +59,8 @@ C4Context
   Rel(cliente, shooptree, "Pesquisa produtos, adiciona ao carrinho e finaliza compras", "HTTPS")
   Rel(shooptree, gateway, "Envia dados para autorização de pagamento", "HTTPS/REST")
   Rel(shooptree, email, "Solicita o envio de e-mails de confirmação", "SMTP/API")
-  
+```
+```mermaid
 C4Container
   title Diagrama de Containers - ShoopTree (Arquitetura Orientada a Eventos)
 
@@ -93,3 +95,4 @@ C4Container
   Rel(broker, notificacao, "Notifica novo evento", "Assíncrono")
   
   Rel(notificacao, email, "Dispara e-mail de confirmação", "API")
+```

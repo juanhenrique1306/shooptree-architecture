@@ -47,52 +47,69 @@ pip install fastapi uvicorn pydantic
 ## Diagramas da Nova Arquitetura
 
 ### Diagrama de Contexto
-```mermaid
-C4Context
-  title Diagrama de Contexto - ShoopTree
-  
-  Person(cliente, "Cliente", "Usuário que navega, busca produtos e realiza compras na plataforma.")
-  System(shooptree, "ShoopTree E-commerce", "Plataforma de comércio eletrônico baseada em microsserviços.")
-  System_Ext(gateway, "Gateway de Pagamento", "Sistema externo (ex: Pagar.me, Stripe) que processa as cobranças.")
-  System_Ext(email, "Serviço de E-mail", "Sistema externo (ex: SendGrid) para envio de notificações.")
 
-  Rel(cliente, shooptree, "Pesquisa produtos, adiciona ao carrinho e finaliza compras", "HTTPS")
-  Rel(shooptree, gateway, "Envia dados para autorização de pagamento", "HTTPS/REST")
-  Rel(shooptree, email, "Solicita o envio de e-mails de confirmação", "SMTP/API")
+```mermaid
+flowchart LR
+
+     Cliente["👤 Cliente"]
+
+    ShoopTree["🛒 ShoopTree E-commerce<br/>Plataforma de comércio eletrônico"]
+
+    Gateway["💳 Gateway de Pagamento<br/>Pagar.me / Stripe"]
+
+    Email["✉️ Serviço de E-mail<br/>SendGrid / SMTP"]
+
+    Cliente -->|"Navega, busca produtos e compra"| ShoopTree
+
+    ShoopTree -->|"Solicita processamento<br/>HTTPS / REST"| Gateway
+
+    ShoopTree -->|"Solicita envio de confirmação<br/>API / SMTP"| Email
 ```
+
 ```mermaid
-C4Container
-  title Diagrama de Containers - ShoopTree (Arquitetura Orientada a Eventos)
+flowchart LR
 
-  Person(cliente, "Cliente", "Usuário da plataforma")
-  
-  System_Boundary(shooptree_b, "ShoopTree E-commerce") {
-    Container(frontend, "Aplicação Web / SPA", "React, JS", "Interface onde o cliente interage.")
-    
-    Container(api_produtos, "Serviço de Produtos", "Python, FastAPI", "Gerencia o catálogo, listagem e criação de itens.")
-    ContainerDb(db_produtos, "Banco de Produtos", "SQLite", "Armazena dados e preços dos produtos.")
-    
-    Container(api_pagamentos, "Serviço de Pagamentos", "Python, FastAPI", "Processa o checkout e gera eventos de compra.")
-    ContainerDb(db_pagamentos, "Banco de Pagamentos", "SQLite", "Armazena o histórico e status das transações.")
-    
-    ContainerQueue(broker, "Event Broker (Observer)", "Python Simulação", "Recebe o evento COMPRA_REALIZADA e notifica os inscritos.")
-    Container(notificacao, "Consumer de Notificações", "Python", "Escuta eventos do broker e dispara alertas.")
-  }
+    Cliente["👤 Cliente"]
 
-  System_Ext(gateway, "Gateway Externo", "Processadora de Cartão/Pix")
-  System_Ext(email, "Serviço de E-mail", "Provedor SMTP")
+    subgraph ShoopTree["🛒 ShoopTree E-commerce"]
 
-  Rel(cliente, frontend, "Navega e compra", "HTTPS")
-  Rel(frontend, api_produtos, "Consulta produtos (GET/POST)", "REST/JSON")
-  Rel(frontend, api_pagamentos, "Envia dados da compra (POST)", "REST/JSON")
-  
-  Rel(api_produtos, db_produtos, "Lê/Escreve", "SQL")
-  Rel(api_pagamentos, db_pagamentos, "Lê/Escreve", "SQL")
-  
-  Rel(api_pagamentos, gateway, "Processa a cobrança", "HTTPS")
-  
-  Rel(api_pagamentos, broker, "Publica evento de compra", "Observer Pattern")
-  Rel(broker, notificacao, "Notifica novo evento", "Assíncrono")
-  
-  Rel(notificacao, email, "Dispara e-mail de confirmação", "API")
+        direction LR
+
+        Frontend["🌐 Aplicação Web / SPA<br/>React + JavaScript"]
+
+        Produtos["📦 Serviço de Produtos<br/>Python + FastAPI"]
+
+        Pagamentos["💳 Serviço de Pagamentos<br/>Python + FastAPI"]
+
+        DBProdutos[("🗄️ Banco de Produtos<br/>SQLite")]
+
+        DBPagamentos[("🗄️ Banco de Pagamentos<br/>SQLite")]
+
+        Broker["📨 Event Broker<br/>Observer Pattern"]
+
+        Notificacao["🔔 Consumer de Notificações<br/>Python"]
+
+        Frontend -->|"GET / POST<br/>Produtos"| Produtos
+
+        Frontend -->|"POST<br/>Checkout"| Pagamentos
+
+        Produtos -->|"Lê / Grava"| DBProdutos
+
+        Pagamentos -->|"Lê / Grava"| DBPagamentos
+
+        Pagamentos -->|"Publica evento<br/>COMPRA_REALIZADA"| Broker
+
+        Broker -->|"Notifica<br/>COMPRA_REALIZADA"| Notificacao
+
+    end
+
+    Gateway["💳 Gateway de Pagamento<br/>Processadora externa"]
+
+    Email["✉️ Serviço de E-mail<br/>Provedor externo"]
+
+    Cliente -->|"HTTPS"| Frontend
+
+    Pagamentos -->|"Processa cobrança<br/>HTTPS / REST"| Gateway
+
+    Notificacao -->|"Envia confirmação<br/>API"| Email
 ```
